@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  title: Quotable Wisdom API
+  description: >
+    240,000+ professionally curated quotes via REST API. Filter by category,
+    mood, faith tradition, era, length, and more. Free tier available — no
+    credit card required.
+
+
+    **Use cases:** Daily quote apps, faith & devotional apps, wellness apps,
+    journaling tools, new tab extensions, no-code platforms.
+
+
+    **Get your free API key:** https://rapidapi.com/quotable2026/api/quotable-wisdom
+  version: "1.0.0"
+  contact:
+    email: quotable2026@gmail.com
+    url: https://quotablewisdom.app
+  x-logo:
+    url: https://quotablewisdom.app/icon.png
+servers:
+  - url: https://ptzxcvrqqmztehcducxq.supabase.co/functions/v1
+    description: Quotable Wisdom API
+security:
+  - ApiKeyHeader: []
+paths:
+  /quotes-random:
+    get:
+      summary: Get a random quote
+      description: Returns one random quote matching the specified filters.
+      operationId: getRandomQuote
+      tags: [Quotes]
+      parameters:
+        - name: category
+          in: query
+          description: "Filter by category (partial match). E.g: grief, faith, leadership, mental health"
+          schema:
+            type: string
+        - name: mood
+          in: query
+          description: "Filter by mood: inspirational, reflective, uplifting, humorous, poignant, challenging, dark, serious"
+          schema:
+            type: string
+            enum: [inspirational, reflective, uplifting, humorous, poignant, challenging, dark, serious]
+        - name: length
+          in: query
+          description: "Filter by length"
+          schema:
+            type: string
+            enum: [Short, Medium, Long]
+        - name: era
+          in: query
+          description: "Filter by historical era"
+          schema:
+            type: string
+            enum: [Ancient, Medieval, "Early Modern", Modern, Contemporary, Present]
+        - name: faith
+          in: query
+          description: "Filter by faith tradition"
+          schema:
+            type: string
+            enum: [christian, islamic, buddhist, jewish, hindu, taoist, confucian]
+      responses:
+        "200":
+          description: A single random quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+              example:
+                id: q_3949ef4a
+                text: "It does not matter how slowly you go as long as you do not stop."
+                author: Confucius
+                category: "Motivation & Success"
+                secondary_category: "Wisdom & Philosophy"
+                mood: "inspirational,uplifting"
+                era: Ancient
+                length: Short
+                faith_tradition: Confucian
+        "401":
+          description: Missing or invalid API key
+        "429":
+          description: Monthly call limit reached
+
+  /quotes-filter:
+    get:
+      summary: Filter quotes with pagination
+      description: Returns multiple quotes matching filters, sorted by curation score. Supports pagination.
+      operationId: filterQuotes
+      tags: [Quotes]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: mood
+          in: query
+          schema:
+            type: string
+            enum: [inspirational, reflective, uplifting, humorous, poignant, challenging, dark, serious]
+        - name: length
+          in: query
+          schema:
+            type: string
+            enum: [Short, Medium, Long]
+        - name: era
+          in: query
+          schema:
+            type: string
+            enum: [Ancient, Medieval, "Early Modern", Modern, Contemporary, Present]
+        - name: faith
+          in: query
+          schema:
+            type: string
+            enum: [christian, islamic, buddhist, jewish, hindu, taoist, confucian]
+        - name: limit
+          in: query
+          description: "Results per page. Trial: 10, Starter: 25, Pro: 50, Platform: 100"
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of quotes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteList"
+        "401":
+          description: Missing or invalid API key
+        "429":
+          description: Monthly call limit reached
+
+  /quotes-categories:
+    get:
+      summary: Get all categories and filter values
+      description: Returns all available categories, moods, lengths, and eras with quote counts.
+      operationId: getCategories
+      tags: [Metadata]
+      responses:
+        "200":
+          description: All filter values and counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Categories"
+
+  /quotes-usage:
+    get:
+      summary: Get API usage stats
+      description: Returns current usage statistics for your API key.
+      operationId: getUsage
+      tags: [Account]
+      responses:
+        "200":
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usage"
+
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          example: q_3949ef4a
+        text:
+          type: string
+          example: "It does not matter how slowly you go as long as you do not stop."
+        author:
+          type: string
+          example: Confucius
+        category:
+          type: string
+          example: "Motivation & Success"
+        secondary_category:
+          type: string
+          example: "Wisdom & Philosophy"
+        mood:
+          type: string
+          example: "inspirational,uplifting"
+        era:
+          type: string
+          example: Ancient
+        length:
+          type: string
+          example: Short
+        faith_tradition:
+          type: string
+          example: Confucian
+    QuoteList:
+      type: object
+      properties:
+        quotes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Quote"
+        total:
+          type: integer
+          example: 2847
+        limit:
+          type: integer
+          example: 10
+        offset:
+          type: integer
+          example: 0
+        has_more:
+          type: boolean
+          example: true
+    Categories:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+        total_categories:
+          type: integer
+        moods:
+          type: array
+          items:
+            type: string
+        lengths:
+          type: array
+          items:
+            type: string
+        eras:
+          type: array
+          items:
+            type: string
+    Usage:
+      type: object
+      properties:
+        client:
+          type: string
+        tier:
+          type: string
+        calls_this_month:
+          type: integer
+        call_limit:
+          type: integer
+        calls_remaining:
+          type: integer
+        usage_pct:
+          type: integer
+        resets:
+          type: string
+tags:
+  - name: Quotes
+    description: Quote retrieval endpoints
+  - name: Metadata
+    description: Filter discovery
+  - name: Account
+    description: Usage and account info
